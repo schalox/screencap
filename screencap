@@ -36,7 +36,7 @@ threads=2
 
 usage(){
 cat << EOF
-usage: `basename $0` [options] filename
+usage: $(basename $0) [options] filename
 
 OPTIONS:
 
@@ -91,7 +91,7 @@ do
 
     --input|-i)
       if [ "$2" == "window" ]; then
-        wininfo=`xwininfo`
+        wininfo="$(xwininfo)"
         u_capture="$(echo "$wininfo" |
             awk '/Width:/{w=$2} /Height:/{h=$2} END{printf("%dx%d", w, h)}')"
         offset="$(echo "$wininfo" | awk '
