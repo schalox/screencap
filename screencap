@@ -35,7 +35,7 @@ map_a=2
 
 usage(){
 cat << EOF
-usage: `basename $0` [options] filename
+usage: $(basename $0) [options] filename
 
 OPTIONS:
 
@@ -72,13 +72,12 @@ EOF
 
 
 # Check for user input
-loop=true
-while $loop
+while :
 do
   case "$1" in
     --help|-h)
       usage
-      exit 1
+      exit 0
       ;;
 
     --fps|-r)
@@ -88,15 +87,15 @@ do
 
     --input|-i)
       if [ "$2" == "window" ]; then
-        wininfo=`xwininfo`
-        width=$(echo "$wininfo" | grep "Width:" | awk '{printf $2}')
-        height=$(echo "$wininfo" | grep "Height:" | awk '{printf $2}')
-        offsetx=$(echo "$wininfo" | grep "Absolute upper-left X:" | awk '{printf $4}')
-        offsety=$(echo "$wininfo" | grep "Absolute upper-left Y:" | awk '{printf $4}')
-        offset="+${offsetx},${offsety}"
-        u_capture="${width}x${height}"
+        wininfo="$(xwininfo)"
+        capture="$(echo "$wininfo" |
+            awk '/Width:/{w=$2} /Height:/{h=$2} END{printf("%dx%d", w, h)}')"
+        offset="$(echo "$wininfo" | awk '
+            /Absolute upper-left X:/{x=$4}
+            /Absolute upper-left Y:/{y=$4}
+            END{printf("+%d,%d", x, y)}')"
       else
-        u_capture="$2"
+        capture="$2"
       fi
       shift 2
       ;;
@@ -108,7 +107,7 @@ do
           ;;
 
         *)
-          u_scale="$2"
+          scale="$2"
           ;;
       esac
       shift 2
@@ -136,24 +135,19 @@ do
 
     --)
       shift
-      loop=false
+      break
       ;;
 
     *)
-      loop=false
+      break
       ;;
   esac
 done
 
 
 # Input post-processing
-if [ -n "$u_capture" ]; then
+if [ -n "$capture" ]; then
   unset scale
-  capture=$u_capture
-fi
-
-if [ -n "$u_scale" ]; then
-  scale=$u_scale
 fi
 
 if [ -n "$scale" ]; then
@@ -168,6 +162,9 @@ map_v=1
 videoinput=( -f x11grab -framerate $fps -s $capture -i :0.0$offset )
 codec_v=( -c:v "$codec_v" )
 codec_a=( -c:a "$codec_a" )
+
+# Last part rescales video to multiples of 2 because encoders hate odd numbers
+filter_v=( -filter:v "${filter_v}${scale}scale=w=trunc(in_w/2)*2:h=trunc(in_h/2)*2" )
 
 if [ -n "$blind" ]; then
   map_v=0
@@ -188,9 +185,6 @@ for((i=0;i< $map_v + $map_a;i++))
 do
   maps+=( -map $i )
 done
-
-# Last part rescales video to multiples of 2 because encoders hate odd numbers
-filter_v=( -filter:v "${filter_v}${scale}scale=w=trunc(in_w/2)*2:h=trunc(in_h/2)*2" )
 
 
 # Build final command
