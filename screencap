@@ -167,7 +167,7 @@ if [ -n "$filter_v" ]; then
 fi
 
 if [ -n "$codec_v" ]; then
-  codec_v=( -codec:v "$codec_v" )
+  codec_v="-codec:v $codec_v"
 fi
 
 videoinput=( "-f x11grab -r $fps -s $capture -i :0.0$offset" )
@@ -175,15 +175,15 @@ map_a="${#audioinput[@]}"
 map_v="${#videoinput[@]}"
 
 if [ -n $preset ]; then
-    pre_v=( -pre:v "$preset" )
+    pre_v="-pre:v "$preset""
 fi
 
 if [ -n "$codec_a" ]; then
-  codec_a=( -codec:a "$codec_a" )
+  codec_a="-codec:a $codec_a"
 fi
 
 # Last part rescales video to multiples of 2 because encoders hate odd numbers
-filter_v=( -filter:v "${filter_v}${scale}scale=w=trunc(in_w/2)*2:h=trunc(in_h/2)*2" )
+filter_v="-filter:v ${filter_v}${scale}scale=w=trunc(in_w/2)*2:h=trunc(in_h/2)*2"
 
 if [ -n "$blind" ]; then
   map_v=0
@@ -212,9 +212,9 @@ $executable \
 "${videoinput[@]}" \
 "${audioinput[@]}" \
 "${maps[@]}" \
-"${codec_v[@]}" \
-"${filter_v[@]}" \
-"${pre_v[@]}" \
-"${codec_a[@]}" \
+"$codec_v" \
+"$filter_v" \
+"$pre_v" \
+"$codec_a" \
 -threads $threads \
 -y $@
