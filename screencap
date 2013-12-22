@@ -92,14 +92,14 @@ do
     --input|-i)
       if [ "$2" == "window" ]; then
         wininfo="$(xwininfo)"
-        u_capture="$(echo "$wininfo" |
+        capture="$(echo "$wininfo" |
             awk '/Width:/{w=$2} /Height:/{h=$2} END{printf("%dx%d", w, h)}')"
         offset="$(echo "$wininfo" | awk '
             /Absolute upper-left X:/{x=$4}
             /Absolute upper-left Y:/{y=$4}
             END{printf("+%d,%d", x, y)}')"
       else
-        u_capture="$2"
+        capture="$2"
       fi
       shift 2
       ;;
@@ -111,7 +111,7 @@ do
           ;;
 
         *)
-          u_scale="$2"
+          scale="$2"
           ;;
       esac
       shift 2
@@ -155,13 +155,8 @@ done
 
 
 # Input post-processing
-if [ -n "$u_capture" ]; then
+if [ -n "$capture" ]; then
   unset scale
-  capture=$u_capture
-fi
-
-if [ -n "$u_scale" ]; then
-  scale=$u_scale
 fi
 
 if [ -n "$scale" ]; then
